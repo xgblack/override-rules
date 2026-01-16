@@ -15,6 +15,7 @@ const GROUPS = {
     CUSTOM_PROXY: "自定义出国",
     SELECT: "选择代理",
     MANUAL: "手动选择",
+    FALLBACK: "故障转移",
     STATIC_RESOURCES: "静态资源"
 };
 
@@ -232,7 +233,9 @@ function buildCustomGroups(baseGroupNames) {
 
 // 插入分组位置:
 // - 默认插入到 “静态资源” 分组之后；
-// - 如果找不到 “静态资源”，则追加到末尾。
+// - 如果找不到 “静态资源”，则插入到 “故障转移” 之后；
+// - 如果仍找不到，则插入到 “手动选择” 之后；
+// - 最后仍找不到才追加到末尾。
 function buildProxyGroups(proxyGroups) {
     const groups = Array.isArray(proxyGroups) ? proxyGroups.slice() : [];
     const filteredGroups = groups.filter(group => {
@@ -241,8 +244,17 @@ function buildProxyGroups(proxyGroups) {
     });
     const baseGroupNames = filteredGroups.map(group => group.name);
     const customGroups = buildCustomGroups(baseGroupNames);
-    const insertIndex = filteredGroups.findIndex(group => group.name === GROUPS.STATIC_RESOURCES);
-    const insertAt = insertIndex === -1 ? filteredGroups.length : insertIndex + 1;
+    const insertTargets = [
+        GROUPS.STATIC_RESOURCES,
+        GROUPS.FALLBACK,
+        GROUPS.MANUAL
+    ];
+    const insertIndex = insertTargets
+        .map(name => filteredGroups.findIndex(group => group.name === name))
+        .find(index => index !== -1);
+    const insertAt = typeof insertIndex === "number" && insertIndex >= 0
+        ? insertIndex + 1
+        : filteredGroups.length;
     filteredGroups.splice(insertAt, 0, ...customGroups);
     return filteredGroups;
 }
