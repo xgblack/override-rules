@@ -38,6 +38,9 @@
 #### 场景: 尾部规则数组
 新增 `EXTRA_TAIL_RULES`，用于将规则插入到 `rules` 列表最末尾，适合作为兜底规则。
 
+#### 场景: 移除广告拦截
+后置覆写脚本会移除 `ADBlock` 与 `AdditionalFilter` 的 rule-providers、对应规则，以及 `广告拦截` 分组与其引用。
+
 ## API接口
 ### SCRIPT 参数
 **描述:** 以脚本参数控制覆写行为。详情见 `helloagents/wiki/api.md`。

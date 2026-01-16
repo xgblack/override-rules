@@ -19,6 +19,13 @@ const GROUPS = {
     STATIC_RESOURCES: "静态资源"
 };
 
+const AD_GROUP = "广告拦截";
+const AD_RULE_PROVIDERS = new Set(["ADBlock", "AdditionalFilter"]);
+const AD_RULES = new Set([
+    "RULE-SET,ADBlock,广告拦截",
+    "RULE-SET,AdditionalFilter,广告拦截"
+]);
+
 // =========================
 // 可自定义区域（EXTRA_RULES）
 // 作用:
@@ -197,7 +204,9 @@ function buildRules(rules) {
     const allCustomRules = uniqueList([...extraRules, ...prependRules, ...appendRules, ...tailRules]);
     const extraRuleSet = new Set(allCustomRules);
     const currentRules = Array.isArray(rules) ? rules.slice() : [];
-    const filteredRules = currentRules.filter(rule => !extraRuleSet.has(rule));
+    const filteredRules = currentRules
+        .filter(rule => !AD_RULES.has(rule))
+        .filter(rule => !extraRuleSet.has(rule));
     return [...extraRules, ...prependRules, ...filteredRules, ...appendRules, ...tailRules];
 }
 
@@ -237,7 +246,7 @@ function buildCustomGroups(baseGroupNames) {
 // - 如果仍找不到，则插入到 “手动选择” 之后；
 // - 最后仍找不到才追加到末尾。
 function buildProxyGroups(proxyGroups) {
-    const groups = Array.isArray(proxyGroups) ? proxyGroups.slice() : [];
+    const groups = cleanProxyGroups(proxyGroups);
     const filteredGroups = groups.filter(group => {
         if (!group || !group.name) return false;
         return group.name !== GROUPS.CUSTOM_DIRECT && group.name !== GROUPS.CUSTOM_PROXY;
@@ -259,8 +268,32 @@ function buildProxyGroups(proxyGroups) {
     return filteredGroups;
 }
 
+function cleanRuleProviders(ruleProviders) {
+    const providers = ruleProviders && typeof ruleProviders === "object" ? ruleProviders : {};
+    const result = {};
+    for (const [key, value] of Object.entries(providers)) {
+        if (!AD_RULE_PROVIDERS.has(key)) {
+            result[key] = value;
+        }
+    }
+    return result;
+}
+
+function cleanProxyGroups(proxyGroups) {
+    const groups = Array.isArray(proxyGroups) ? proxyGroups : [];
+    return groups
+        .filter(group => group && group.name && group.name !== AD_GROUP)
+        .map(group => {
+            if (!Array.isArray(group.proxies)) return group;
+            const proxies = group.proxies.filter(name => name !== AD_GROUP);
+            if (proxies.length === group.proxies.length) return group;
+            return Object.assign({}, group, { proxies });
+        });
+}
+
 function main(config) {
     const resultConfig = Object.assign({}, config);
+    resultConfig["rule-providers"] = cleanRuleProviders(config && config["rule-providers"]);
     resultConfig["proxy-groups"] = buildProxyGroups(config && config["proxy-groups"]);
     resultConfig.rules = buildRules(config && config.rules);
     return resultConfig;
