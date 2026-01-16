@@ -190,8 +190,8 @@ function buildRuleEntries(rules, targetGroup) {
 // 规则合并策略:
 // 1) EXTRA_RULES -> 最前置（直连优先）
 // 2) CUSTOM_DIRECT_RULES -> 前置（在 EXTRA_RULES 之后）
-// 3) 原始 rules -> 中间
-// 4) CUSTOM_PROXY_RULES -> 后置
+// 3) CUSTOM_PROXY_RULES -> 前置（在 CUSTOM_DIRECT_RULES 之后）
+// 4) 原始 rules -> 中间
 // 5) EXTRA_TAIL_RULES -> 最末尾
 //
 // 幂等:
@@ -207,7 +207,7 @@ function buildRules(rules) {
     const filteredRules = currentRules
         .filter(rule => !AD_RULES.has(rule))
         .filter(rule => !extraRuleSet.has(rule));
-    return [...extraRules, ...prependRules, ...filteredRules, ...appendRules, ...tailRules];
+    return [...extraRules, ...prependRules, ...appendRules, ...filteredRules, ...tailRules];
 }
 
 // 构建自定义分组:
