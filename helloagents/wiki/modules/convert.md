@@ -30,13 +30,13 @@
 新增 `自定义直连` 与 `自定义出国` 分组，且支持规则在头部/尾部插入。
 
 #### 场景: 分组与规则位置
-自定义分组插入优先级为：`静态资源` 之后 → `故障转移` 之后 → `手动选择` 之后 → 末尾；规则顺序为 `EXTRA_RULES` → `CUSTOM_DIRECT_RULES` → `CUSTOM_PROXY_RULES` → 原始 rules → `EXTRA_TAIL_RULES`，并保持幂等与 `EXTRA_RULES` 直连前置能力。
+自定义分组插入优先级为：`静态资源` 之后 → `故障转移` 之后 → `手动选择` 之后 → 末尾；规则顺序为 `ExtraHead` → `CustomDirect` → `CustomProxy` → 原始 rules → `ExtraTail`，并保持幂等。
 
 #### 场景: 自定义方式说明
-自定义规则与分组名称请直接修改 `post_convert.js` 中标注“可自定义区域”的注释块，注释包含可用语法、示例与插入顺序说明；如需让脚本自动补策略，可在 `CUSTOM_DIRECT_RULES`/`CUSTOM_PROXY_RULES` 中仅保留前两段。
+自定义规则已迁移到 `ruleset/*.list` 文件中，仅保留“规则类型,匹配值”。对应文件为：`ruleset/ExtraHead.list`、`ruleset/CustomDirect.list`、`ruleset/CustomProxy.list`、`ruleset/ExtraTail.list`。脚本通过 rule-providers + RULE-SET 引用这些规则集。
 
 #### 场景: 尾部规则数组
-新增 `EXTRA_TAIL_RULES`，用于将规则插入到 `rules` 列表最末尾，适合作为兜底规则。
+`ExtraTail` 规则集用于将规则插入到 `rules` 列表最末尾，适合作为兜底规则。
 
 #### 场景: 移除广告拦截
 后置覆写脚本会移除 `ADBlock` 与 `AdditionalFilter` 的 rule-providers、对应规则，以及 `广告拦截` 分组与其引用。

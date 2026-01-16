@@ -1,0 +1,25 @@
+# 自定义直连规则（仅保留“规则类型,匹配值”）
+DOMAIN-SUFFIX,cn.bing.com
+DOMAIN-SUFFIX,gov.cn
+DOMAIN-SUFFIX,cool-code.com
+DOMAIN-SUFFIX,coolstudio.tech
+DOMAIN-SUFFIX,xgblack.com
+DOMAIN-SUFFIX,xgblack.cn
+DOMAIN-SUFFIX,xgblack.cool
+IP-CIDR,89.117.94.227/32
+IP-CIDR,129.226.201.81/32
+# IP-CIDR,203.101.231.154/32
+IP-CIDR,43.135.6.171/32
+IP-CIDR,185.217.109.246/32
+DOMAIN-SUFFIX,gitlink.org.cn
+DOMAIN-SUFFIX,love.com
+DOMAIN-SUFFIX,pypi.org
+DOMAIN-SUFFIX,husan97x.xyz
+DOMAIN-SUFFIX,tavily.com
+DOMAIN-SUFFIX,foxcode.rjj.cc
+DOMAIN-SUFFIX,cubence.com
+DOMAIN-SUFFIX,minicod.com
+DOMAIN-SUFFIX,packycode.com
+DOMAIN-SUFFIX,88code.org
+DOMAIN-SUFFIX,open.bigmodel.cn
+DOMAIN-SUFFIX,duckcoding.com
