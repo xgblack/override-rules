@@ -93,7 +93,29 @@ const EXTRA_TAIL_RULES = [
 // - 避免与 EXTRA_RULES 重复，否则会被去重。
 // =========================
 const CUSTOM_DIRECT_RULES = [
-    // "DOMAIN-SUFFIX,example.cn"
+    "DOMAIN-SUFFIX,cn.bing.com",
+    "DOMAIN-SUFFIX,gov.cn",
+    "DOMAIN-SUFFIX,cool-code.com",
+    "DOMAIN-SUFFIX,coolstudio.tech",
+    "DOMAIN-SUFFIX,xgblack.com",
+    "DOMAIN-SUFFIX,xgblack.cn",
+    "DOMAIN-SUFFIX,xgblack.cool",
+    "IP-CIDR,89.117.94.227/32",
+    "IP-CIDR,129.226.201.81/32",
+    "IP-CIDR,43.135.6.171/32",
+    "IP-CIDR,185.217.109.246/32",
+    "DOMAIN-SUFFIX,gitlink.org.cn",
+    "DOMAIN-SUFFIX,love.com",
+    "DOMAIN-SUFFIX,pypi.org",
+    "DOMAIN-SUFFIX,husan97x.xyz",
+    "DOMAIN-SUFFIX,tavily.com",
+    "DOMAIN-SUFFIX,foxcode.rjj.cc",
+    "DOMAIN-SUFFIX,cubence.com",
+    "DOMAIN-SUFFIX,minicod.com",
+    "DOMAIN-SUFFIX,packycode.com",
+    "DOMAIN-SUFFIX,88code.org",
+    "DOMAIN-SUFFIX,open.bigmodel.cn",
+    "DOMAIN-SUFFIX,duckcoding.com"
 ];
 
 // =========================
@@ -115,7 +137,16 @@ const CUSTOM_DIRECT_RULES = [
 //   或自行调整插入顺序（见 buildRules）。
 // =========================
 const CUSTOM_PROXY_RULES = [
-    // "DOMAIN-SUFFIX,example.com"
+    "DOMAIN-SUFFIX,plugins.jetbrains.com",
+    "DOMAIN-SUFFIX,marketplace.jetbrains.com",
+    "DOMAIN,cloudreve.azurecr.io",
+    "DOMAIN-SUFFIX,vvvv.ee",
+    "DOMAIN-SUFFIX,alice.dns-dynamic.net",
+    "DOMAIN-SUFFIX,tuhjk.asia",
+    "DOMAIN-SUFFIX,521pokemon.com",
+    "DOMAIN-SUFFIX,web1.go52pokemon.com",
+    "DOMAIN-SUFFIX,xterminal.cn",
+    "DOMAIN-SUFFIX,figma.com"
 ];
 
 // 去重工具: 保持顺序，移除空值与重复项。
