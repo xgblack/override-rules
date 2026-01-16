@@ -19,6 +19,8 @@ const GROUPS = {
     STATIC_RESOURCES: "静态资源"
 };
 
+const CUSTOM_GROUP_ICON = "https://gcore.jsdelivr.net/gh/shindgewongxj/WHATSINStash@master/icon/select.png";
+
 const AD_GROUP = "广告拦截";
 const AD_RULE_PROVIDERS = new Set(["ADBlock", "AdditionalFilter"]);
 const AD_RULES = new Set([
@@ -219,25 +221,50 @@ function buildCustomGroups(baseGroupNames) {
         GROUPS.SELECT,
         GROUPS.MANUAL
     ]);
-    const proxyProxies = uniqueList([
+    const proxyProxies = buildAiStyleProxyProxies(baseGroupNames);
+    const fallbackProxyProxies = uniqueList([
         "DIRECT",
         GROUPS.SELECT,
         ...baseGroupNames,
         GROUPS.CUSTOM_DIRECT
     ]);
+    const finalProxyProxies = proxyProxies.length > 1 ? proxyProxies : fallbackProxyProxies;
 
     return [
         {
             "name": GROUPS.CUSTOM_DIRECT,
+            "icon": CUSTOM_GROUP_ICON,
             "type": "select",
             "proxies": directProxies
         },
         {
             "name": GROUPS.CUSTOM_PROXY,
+            "icon": CUSTOM_GROUP_ICON,
             "type": "select",
-            "proxies": proxyProxies
+            "proxies": finalProxyProxies
         }
     ];
+}
+
+// 参考 AI 分组实现逻辑构建“自定义出国”可选代理列表。
+function buildAiStyleProxyProxies(baseGroupNames) {
+    const lowCostGroup = "低倍率节点";
+    const landingGroup = "落地节点";
+    const hasSelect = baseGroupNames.includes(GROUPS.SELECT);
+    const hasManual = baseGroupNames.includes(GROUPS.MANUAL);
+    const hasLowCost = baseGroupNames.includes(lowCostGroup);
+    const countryGroups = baseGroupNames.filter(name => {
+        if (!name || !name.endsWith("节点")) return false;
+        return name !== lowCostGroup && name !== landingGroup;
+    });
+
+    return uniqueList([
+        hasSelect ? GROUPS.SELECT : null,
+        ...countryGroups,
+        hasLowCost ? lowCostGroup : null,
+        hasManual ? GROUPS.MANUAL : null,
+        "DIRECT"
+    ]);
 }
 
 // 插入分组位置:
