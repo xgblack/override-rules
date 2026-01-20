@@ -16,7 +16,8 @@ const GROUPS = {
     SELECT: "选择代理",
     MANUAL: "手动选择",
     FALLBACK: "故障转移",
-    STATIC_RESOURCES: "静态资源"
+    STATIC_RESOURCES: "静态资源",
+    AI: "AI"
 };
 
 const CUSTOM_GROUP_ICON = "https://gcore.jsdelivr.net/gh/shindgewongxj/WHATSINStash@master/icon/select.png";
@@ -144,7 +145,7 @@ function buildAiStyleProxyProxies(baseGroupNames) {
 // - 如果仍找不到，则插入到 “手动选择” 之后；
 // - 最后仍找不到才追加到末尾。
 function buildProxyGroups(proxyGroups) {
-    const groups = cleanProxyGroups(proxyGroups);
+    const groups = cleanProxyGroups(proxyGroups).map(enhanceAiGroup);
     const filteredGroups = groups.filter(group => {
         if (!group || !group.name) return false;
         return group.name !== GROUPS.CUSTOM_DIRECT && group.name !== GROUPS.CUSTOM_PROXY;
@@ -164,6 +165,12 @@ function buildProxyGroups(proxyGroups) {
         : filteredGroups.length;
     filteredGroups.splice(insertAt, 0, ...customGroups);
     return filteredGroups;
+}
+
+function enhanceAiGroup(group) {
+    if (!group || group.name !== GROUPS.AI) return group;
+    if (group["include-all"]) return group;
+    return Object.assign({}, group, { "include-all": true });
 }
 
 function cleanRuleProviders(ruleProviders) {
