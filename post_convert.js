@@ -112,6 +112,7 @@ function buildCustomGroups(baseGroupNames) {
         {
             "name": GROUPS.CUSTOM_PROXY,
             "icon": CUSTOM_GROUP_ICON,
+            "include-all": true,
             "type": "select",
             "proxies": finalProxyProxies
         }
