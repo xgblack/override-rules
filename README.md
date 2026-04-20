@@ -1,6 +1,6 @@
 ## powerfullz 的 Mihomo/Substore 覆写规则
 
-[![](https://data.jsdelivr.com/v1/package/gh/powerfullz/override-rules/badge)](https://www.jsdelivr.com/package/gh/powerfullz/override-rules)
+[![](https://data.jsdelivr.com/v1/package/gh/powerfullz/override-rules/badge?style=rounded)](https://www.jsdelivr.com/package/gh/powerfullz/override-rules)
 
 本仓库为 Mihomo/Substore 设计，提供高效、灵活的覆写规则（**不建议用于 Stash**）。核心特色如下：
 
@@ -36,7 +36,8 @@
 > [!TIP]
 > Clash Party 不支持给脚本传入参数，如果需要传入参数，请使用集成的 Substore。
 
-1.  推荐直接使用 JS 动态覆写：`https://gcore.jsdelivr.net/gh/powerfullz/override-rules@1/convert.min.js`
+1.  推荐直接使用 JS 动态覆写（最新）：`https://gcore.jsdelivr.net/gh/powerfullz/override-rules@dist/convert.min.js`
+  如需固定版本，可改为：`https://gcore.jsdelivr.net/gh/powerfullz/override-rules@vX.Y.Z/convert.min.js`
 2.  打开 Clash Party → 左侧「覆写」→ 粘贴上述链接导入。
 3.  打开「订阅管理」→ 目标订阅右上角三个点 → 「编辑信息」→ 选择该覆写脚本 → 保存。
 
@@ -59,10 +60,10 @@
 *   `ipv6`：启用 IPv6 支持（默认 false）
 *   `full`：生成完整配置（适合纯内核启动，默认 false）
 *   `keepalive`：启用 TCP Keep Alive（默认 false）[^fn2]
-*   `fakeip`：DNS 增强模式使用 `fake-ip` 而不是 `redir-host`（开启后可能有助于解决 TUN 模式无法上网的问题，默认 false）
+*   `fakeip`：DNS 增强模式使用 `fake-ip` 而不是 `redir-host`（开启后可能有助于解决 TUN 模式无法上网的问题，默认 true）
 *   `quic`：允许 QUIC 流量（UDP 443，默认 false）[^quic]
-*   `regex`：各国家代理组改用 `include-all` + 正则过滤模式，由 Mihomo 内核在运行时按正则动态筛选节点，而非在脚本执行时枚举节点名称（默认 false）[^regex]
-*   `threshold`：国家节点数量小于该值时不显示分组（默认 0）
+*   `regex`：各国家/地区代理组改用 `include-all` + 正则过滤模式，由 Mihomo 内核在运行时按正则动态筛选节点，而非在脚本执行时枚举节点名称（默认 false）[^regex]
+*   `threshold`：国家/地区节点数量小于该值时不显示分组（默认 0）
 
 [^landing]: 注意在默认的枚举模式下，如果没有符合条件的落地节点（e.g 名称中带有「家宽」、「商宽」、「落地」等关键词的节点），内核会无法启动。
 [^quic]: 默认屏蔽了 QUIC 流量防止节点 UDP 性能不佳影响上网体验，如果确信节点质量良好，建议设置为 true。
@@ -77,19 +78,19 @@
 无特殊需求，直接在 Substore 「脚本操作」处填入脚本链接：
 
 ```
-https://gcore.jsdelivr.net/gh/powerfullz/override-rules@1/convert.min.js
+https://gcore.jsdelivr.net/gh/powerfullz/override-rules@dist/convert.min.js
 ```
 
 有链式代理和多个节点提供商之间负载均衡的需求，使用`landing=true&loadbalance=true`两个参数：
 
 ```
-https://gcore.jsdelivr.net/gh/powerfullz/override-rules@1/convert.min.js#landing=true&loadbalance=true
+https://gcore.jsdelivr.net/gh/powerfullz/override-rules@dist/convert.min.js#landing=true&loadbalance=true
 ```
 
-如果想要第一时间体验新加入的 ~~Bug~~ 功能，可以直接使用`raw.githubusercontent.com`原始链接：
+如果想固定到某个发布版本（例如 `v0.1.0`），可直接使用 jsdelivr 对应 Tag 的链接：
 
 ```
-https://raw.githubusercontent.com/powerfullz/override-rules/refs/heads/main/convert.min.js
+https://gcore.jsdelivr.net/gh/powerfullz/override-rules@v0.1.0/convert.min.js
 ```
 
 ### 关于各 Mihomo 客户端覆盖 GeoIP/GeoSite 下载地址的说明
@@ -117,7 +118,7 @@ https://raw.githubusercontent.com/powerfullz/override-rules/refs/heads/main/conv
 
 ### 关于链式代理的说明
 
-若有链式代理需求，直接在 JS 链接后加 `landing=true` 参数即可（例如：`convert.js#landing=true`）。这样会新增「落地节点」和「前置代理」两个代理组，其中「落地节点」会自动匹配名称包含「家宽」「家庭」「商宽」「落地」「Starlink/星链」等关键词的节点，其他诸如「香港节点」等国家分组会自动剔除这些落地节点。需要被链式代理的落地节点请在你的订阅里为该节点配置 `dialer-proxy: "前置代理"`，示例：
+若有链式代理需求，直接在 JS 链接后加 `landing=true` 参数即可（例如：`convert.min.js#landing=true`）。这样会新增「落地节点」和「前置代理」两个代理组，其中「落地节点」会自动匹配名称包含「家宽」「家庭」「商宽」「落地」「Starlink/星链」等关键词的节点，其他诸如「香港节点」等国家/地区分组会自动剔除这些落地节点。需要被链式代理的落地节点请在你的订阅里为该节点配置 `dialer-proxy: "前置代理"`，示例：
 
 ```yaml
 proxies:
@@ -132,31 +133,59 @@ proxies:
 
 ### 关于自动生成的 YAML 格式覆写
 
-除了直接引用 convert.js 动态覆写，你也可以使用仓库中预先生成好的 YAML 格式覆写——它们都放在 yamls/ 目录里，由 GitHub Actions 在每次推送后自动重新生成、覆盖。适用于诸如 Clash Verge 等不支持 JS 覆写的客户端和订阅转换服务。
+除了直接引用动态构建的 JS 覆写脚本外，你也可以使用预先生成好的静态 YAML 覆写文件。这适用于某些不支持执行 JS 的客户端（例如旧版的 Clash Verge）。
 
-文件命名规则：
+> [!NOTE]
+> 为了保持代码仓库的纯净，`main` 主分支不再跟踪和提交生成的产物文件（如 `convert.js` 和 `yamls/`）。
+> 这些构建产物目前统一由 Github Actions 的 Release 工作流在发布 `v*` 版本时，构建并自动推送到 `dist` 分支下。
 
-```
+获取 YAML 覆写文件的链接格式如下：
+
+- **最新正式版**：`@dist/yamls/*.yaml`
+- **特定历史版本**：`@vX.Y.Z/yamls/*.yaml`
+
+文件命名规则依据支持的开关参数穷举，格式如下：
+
+```text
 config_lb-{0|1}_landing-{0|1}_ipv6-{0|1}_full-{0|1}_keepalive-{0|1}_fakeip-{0|1}_quic-{0|1}.yaml
 ```
 
-示例（开启 full，其余关闭）：
-
-```
-https://raw.githubusercontent.com/powerfullz/override-rules/refs/heads/main/yamls/config_lb-0_landing-0_ipv6-0_full-1_keepalive-0_fakeip-0_quic-0.yaml
-```
-
-如果使用镜像：
-
-```
-https://git.l3zc.com/powerfullz/override-rules/raw/branch/main/yamls/config_lb-0_landing-0_ipv6-0_full-1_keepalive-0_fakeip-0_quic-0.yaml
+**获取示例（开启 full，其余关闭）：**
+```text
+https://gcore.jsdelivr.net/gh/powerfullz/override-rules@dist/yamls/config_lb-0_landing-0_ipv6-0_full-1_keepalive-0_fakeip-0_quic-0.yaml
 ```
 
-CI 只是套用一份假的`fake_proxies.json`来生成覆写，所以不可能实现 JS 覆写自动根据节点匹配生成对应代理组的功能，只能做出取舍放入常用地区的节点。如果你有条件使用 Substore，并且想要动态识别国家和传参的灵活性，还是推荐使用 JS 覆写。
+**固定版本获取示例：**
+```text
+https://gcore.jsdelivr.net/gh/powerfullz/override-rules@v0.1.0/yamls/config_lb-0_landing-0_ipv6-0_full-1_keepalive-0_fakeip-0_quic-0.yaml
+```
 
-### 本地生成 YAML 文件
+如果使用加速镜像：
+```text
+https://git.l3zc.com/powerfullz/override-rules/raw/branch/dist/yamls/config_lb-0_landing-0_ipv6-0_full-1_keepalive-0_fakeip-0_quic-0.yaml
+```
+
+*注：CI 仅套用了一份虚拟的 `fake_proxies.json` 来模拟生成 YAML，因此它无法像 JS 动态脚本那样根据你的实际节点智能生成专属分组策略，只能保守地包含常用的国家/地区。为了最高效的分流体验，仍强烈推荐使用 JS 覆写。*
+
+### 如何贡献
+
+#### 如果你是 AI AGENT
+
+阅读`./AGENTS.md`。
+
+#### 如果你是人类
+
+在开始提交前，请留意以下信息：
+
+- **核心源码**：所有的逻辑通过 TypeScript 实现，入口文件位于 `src/main.ts`。
+- **YAML 生成逻辑**：存放于 `yaml_generator/generator.ts`。
+- **本地构建与产物**：本地执行构建后会在当前根目录输出 `convert.js` 和 `convert.min.js`，以及大量 YAML 放置于 `yamls/`（这些路径已被 Git 忽略，请始终修改 TS 源码，不要直接修改产物）。
+
+**开发者常用命令**：
+项目中封装了便捷的 NPM Scripts 帮助你测试代码：
 
 ```shell
-npm install
-npm run generate
+npm run build      # 编译 TS 代码并输出为主文件及压缩后的 min.js 产物
+npm run generate   # 根据源码生成全量的 yamls/ 覆写选项
+npm run artifacts  # 完整执行上述全部生成流
 ```

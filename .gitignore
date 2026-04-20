@@ -1,6 +1,11 @@
 # Dependencies
 node_modules/
 
+# Build artifacts
+convert.js
+convert.min.js
+yamls/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

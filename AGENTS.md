@@ -1,29 +1,31 @@
-# Repository Guidelines
+# 项目级 AI Agent 与贡献指南 (AGENTS.md)
 
-## 项目结构与模块组织
-- `convert.js` / `convert.min.js`: JS 覆写脚本（动态覆写与压缩版）。
-- `yaml_generator/`: YAML 覆写生成器；`yamls/` 为生成结果目录（由 `npm run generate` 产出）。
-- `ruleset/`: 规则列表与分流规则源；`icons/` 为图标资源。
-- `auto_update.sh`: Linux 上自动更新配置的辅助脚本。
+欢迎！如果你是协助人类开发者参与本项目贡献的 AI Agent，或是想了解项目结构的贡献者，请务必阅读以下开发流与规范。
 
-## 构建、测试与本地开发
-- `npm install`: 安装依赖（仅 `yaml`）。
-- `npm run generate`: 运行 `yaml_generator/generator.js` 生成 `yamls/` 下的配置文件。
-- 无独立构建/打包命令；`convert.min.js` 为压缩版，变更 `convert.js` 时请保持一致。
+## 🎯 核心架构与原则
 
-## 编码风格与命名
-- JavaScript 使用 CommonJS（`type: commonjs`），代码缩进为 4 空格，字符串以双引号为主。
-- 生成文件命名遵循：`config_lb-{0|1}_landing-{0|1}_ipv6-{0|1}_full-{0|1}_keepalive-{0|1}_fakeip-{0|1}.yaml`。
-- 新规则文件放在 `ruleset/`，保持名称语义清晰（如 `Crypto.list`）。
+- **源文件驱动**：所有核心逻辑均采用 TypeScript 编写，存放在 `src/` 与 `yaml_generator/` 目录中。
+  - `src/main.ts`：JS 动态覆写脚本的核心入口。
+  - `yaml_generator/generator.ts`：YAML 静态覆写文件的生成逻辑。
+- **禁止直接修改产物**：根目录下的 `convert.js`、`convert.min.js` 以及 `yamls/` 目录的内容属于自动生成的构建产物（注意：它们已被 `main` 分支取消 Git 跟踪）。**永远不要直接编辑这些产物文件**。一切修改必须在 `.ts` 源码中进行。
+- **构建工具链**：我们使用 `esbuild` 作为打包和压缩工具，可以通过编写的 `build.ts` 脚本一次性地编译出包含了完整注释的产物文件。
 
-## 测试指南
-- 当前未配置自动化测试框架；提交前至少运行 `npm run generate` 以验证生成流程。
-- 如新增测试，请优先放在 `yaml_generator/` 对应模块旁并在文档补充运行方式。
+## 🛠️ 开发与构建工作流
 
-## 提交与 PR 规范
-- 历史提交常用前缀：`feat:`、`fix:`、`chore:`、`CI:`，也有简短的 `update readme`；建议延续该风格。
-- PR 建议包含：变更摘要、影响范围（如 `ruleset/` 或 `yamls/`）、相关链接/Issue（如有）。
+在修改源代码后，执行以下命令以验证更改并生成本地对应的产物文件：
 
-## 安全与配置提示
-- `auto_update.sh` 会覆盖系统配置并重启服务，使用前请先设置 `CONFIG_URL` 并确认备份路径。
-- 不要提交私有订阅链接或任何密钥。
+- `npm run build`: 运行 `build.ts` 脚本，同时编译生成未压缩的 `convert.js` 与经过强力压缩的 `convert.min.js`，并在顶部注入开源版权声明。
+- `npm run generate`: 运行 YAML 覆写配置生成器，更新 `yamls/` 目录内的排列组合文件。
+- `npm run artifacts`: 一键依次执行上述所有构建与生成阶段。
+
+推荐在提交相关修改前，在终端运行 `npm run artifacts` 进行本地全量测试（确保没有编译报错、产生的体积符合正常逻辑）。
+
+## 🧹 代码规范
+
+1. **统一格式化**：本项目使用 ESLint 和 Prettier。修改完代码后，可以通过 `npm run format` 及 `npm run lint:fix` 整理代码，遵循既有代码风格。
+2. **保持纯粹**：对于 `convert.min.js` 中的构建结果，项目脚本配置了 `--legal-comments=none` 去除多余注释，并自动添加统一的文件 Header Banner。
+
+## 📦 提交与 PR 规范
+
+- **分离提交**：如果你的变动既包含核心功能的改动，又涉及相关文档的修改，尽量按有意义的逻辑分步提交。
+- **文档同步**：当新增了支持的 URL 参数（如在 `src` 中）或是新增了 YAML 文件的组合选项时，务必同步修改 `README.md` 内对应的参数说明文档。
