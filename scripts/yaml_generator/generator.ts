@@ -23,22 +23,31 @@ import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 
-import type { ClashConfig, ScriptArgs } from "../src/types";
+import type { ClashConfig } from "../../src/types";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const BASE_DIR = path.resolve(__dirname, "..");
+const BASE_DIR = path.resolve(__dirname, "../..");
 const GENERATOR_DIR = __dirname;
 const CONVERT_FILE = path.join(BASE_DIR, "convert.js");
 const FAKE_PROXIES_FILE = path.join(GENERATOR_DIR, "fake_proxies.json");
 const OUTPUT_DIR = path.join(BASE_DIR, "yamls");
 
-const FLAGS = ["loadbalance", "landing", "ipv6", "full", "keepalive", "fakeip", "quic"] as const;
+const FLAGS = [
+    "loadbalance",
+    "landing",
+    "ipv6",
+    "full",
+    "keepalive",
+    "fakeip",
+    "quic",
+    "tun",
+] as const;
 
 type FlagName = (typeof FLAGS)[number];
 type FlagArgs = Record<FlagName, boolean>;
-type GeneratorScriptArgs = ScriptArgs & FlagArgs & { regex: true };
+type GeneratorScriptArgs = { [K in FlagName]: boolean } & { regex: true };
 
 interface VmSandbox extends Record<string, unknown> {
     $arguments: GeneratorScriptArgs;
@@ -54,6 +63,7 @@ const FLAG_SHORT_NAMES: Record<FlagName, string> = {
     keepalive: "keepalive",
     fakeip: "fakeip",
     quic: "quic",
+    tun: "tun",
 };
 
 function loadFakeConfig(): ClashConfig {

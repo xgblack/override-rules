@@ -5,12 +5,12 @@ const mainCode = fs.readFileSync("src/main.ts", "utf8");
 const bannerMatch = mainCode.match(/\/\*![\s\S]*?\*\//);
 const bannerText = bannerMatch ? bannerMatch[0] : "";
 
-const commonOptions: esbuild.BuildOptions = {
+const commonOptions = {
     entryPoints: ["src/main.ts"],
     bundle: true,
     platform: "neutral",
     format: "iife",
-    target: "es2020",
+    target: "ES2025",
     legalComments: "none",
     charset: "utf8",
     banner: { js: bannerText },
@@ -22,7 +22,7 @@ Promise.all([
         ...commonOptions,
         minify: true,
         outfile: "convert.min.js",
-        drop: ["debugger"], 
+        drop: ["debugger"],
     }),
 ]).catch((err) => {
     console.error(err);

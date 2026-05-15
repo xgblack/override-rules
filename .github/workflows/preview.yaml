@@ -1,34 +1,25 @@
-name: Release Artifacts
+name: Deploy Preview
 
 "on":
   push:
-    tags:
-      - "src-v*"
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - '.github/workflows/preview.yaml'
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  preview:
     runs-on: ubuntu-latest
-    env:
-      SRC_TAG: ${{ github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          fetch-tags: true
-
-      - name: Derive version from source tag
-        run: |
-          # src-vX.Y.Z → vX.Y.Z
-          VERSION="${SRC_TAG#src-}"
-          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-            echo "::error::Invalid version derived from tag: '$VERSION' (source: '$SRC_TAG')"
-            exit 1
-          fi
-          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -42,10 +33,12 @@ jobs:
       - name: Validate source
         run: npm run typecheck && npm run format && npm run lint
 
-      - name: Build release artifacts
+      - name: Build artifacts
         run: npm run artifacts
 
-      - name: Assemble dist payload
+      - name: Assemble preview payload
+        env:
+          VERSION: preview
         run: |
           set -euo pipefail
 
@@ -54,9 +47,6 @@ jobs:
           cp convert.js publish/convert.js
           cp convert.min.js publish/convert.min.js
           cp -a yamls/. publish/yamls/
-
-          # Package yamls.tar.gz for release assets
-          tar -czvf yamls.tar.gz yamls/
 
           RELEASED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           export RELEASED_AT
@@ -119,53 +109,16 @@ jobs:
           writeManifest("publish");
           NODE
 
-      - name: Publish to dist branch & Update Tag
+      - name: Publish to preview branch
         run: |
           cd publish
           git init
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b dist
+          git checkout -b preview
           git add .
-          git commit -m "Auto-generated dist for ${VERSION}"
+          git commit -m "Auto-generated preview for ${{ github.sha }}"
           
-          # Force push the dist branch
+          # Force push the preview branch
           git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-          git push -f -u origin dist
-          
-          # Force push the tag to this new commit
-          git tag -f "${VERSION}"
-          git push -f origin "${VERSION}"
-
-      - name: Generate Release Notes
-        run: |
-          awk '/^#+ \[?[0-9]+\.[0-9]+\.[0-9]+/ { if (p) exit; p=1; next } p' CHANGELOG.md > RELEASE_NOTES.md
-          
-          cat >> RELEASE_NOTES.md << 'EOF'
-          
-          ---
-          
-          构建产物已同步并放于根目录。
-
-          - JS 覆写 (最新版, 推荐)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}/convert.min.js`
-          - JS 覆写 (当前版本)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/convert.min.js`
-          - YAML 索引 (最新版)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}/manifest.json`
-          - YAML 索引 (当前版本)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/manifest.json`
-          EOF
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ env.VERSION }}
-          body_path: RELEASE_NOTES.md
-          files: |
-            convert.js
-            convert.min.js
-            yamls.tar.gz
-
-      - name: Purge jsDelivr cache
-        run: |
-          set -euo pipefail
-
-          curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}/convert.min.js"
-          curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/convert.min.js"
+          git push -f -u origin preview

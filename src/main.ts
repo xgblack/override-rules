@@ -6,25 +6,18 @@ https://github.com/powerfullz/override-rules
 - loadbalance: 启用负载均衡（url-test/load-balance，默认 false）
 - landing: 启用落地节点功能（如机场家宽/星链/落地分组，默认 false）
 - ipv6: 启用 IPv6 支持（默认 false）
+- tun: 启用 TUN 模式（默认 false）
 - full: 输出完整配置（适合纯内核启动，默认 false）
 - keepalive: 启用 tcp-keep-alive（默认 false）
-- fakeip: DNS 使用 FakeIP 模式（默认 true，false 为 RedirHost）
+- fakeip: DNS 使用 FakeIP 模式（默认 true；传 false 时为 RedirHost）
 - quic: 允许 QUIC 流量（UDP 443，默认 false）
 - threshold: 地区节点数量小于该值时不显示分组 (默认 0)
 - regex: 使用正则过滤模式（include-all + filter）写入各地区代理组，而非直接枚举节点名称（默认 false）
 
-源码说明：
-- 源码已迁移至 `src/*.ts` 文件，使用 TypeScript 编写，编译后输出到 `dist/*.js`。
+源码已迁移至 `src/*.ts`。
 */
 
-import {
-    CDN_URL,
-    FAKE_IP_FILTER,
-    geoxURL,
-    PROXY_GROUPS,
-    ruleProviders,
-    snifferConfig,
-} from "./constants";
+import { CDN_URL, PROXY_GROUPS } from "./constants";
 import { buildFeatureFlags } from "./args";
 import { buildCountryProxyGroups, buildProxyGroups } from "./proxy_groups";
 import {
@@ -33,11 +26,20 @@ import {
     parseLowCost,
     parseNodesByLanding,
     stripNodeSuffix,
-} from "./proxy_parser";
+} from "./node_parser";
 import { buildRules } from "./rules";
-import { buildDnsConfig } from "./dns";
+import { ruleProviders } from "./rule_providers";
+import { buildDns, snifferConfig } from "./dns";
+import { buildTunConfig } from "./tun";
 import { buildBaseLists } from "./selectors";
 import type { ClashConfig, ScriptArgs } from "./types";
+
+const geoxURL = {
+    geoip: `${CDN_URL}/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat`,
+    geosite: `${CDN_URL}/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat`,
+    mmdb: `${CDN_URL}/gh/Loyalsoldier/geoip@release/Country.mmdb`,
+    asn: `${CDN_URL}/gh/Loyalsoldier/geoip@release/GeoLite2-ASN.mmdb`,
+};
 
 declare const $arguments: ScriptArgs;
 
@@ -60,20 +62,18 @@ const {
     fakeIPEnabled,
     quicEnabled,
     regexFilter,
+    tunEnabled,
     countryThreshold,
 } = buildFeatureFlags(rawArgs);
 
-// eslint-disable-next-line no-unused-vars -- 通过 vm.runInContext 在 yaml_generator 中被调用
 function main(config: ClashConfig): ClashConfig {
-    const resultConfig: ClashConfig = { proxies: config.proxies };
-
-    const countryInfo = parseCountries(resultConfig);
-    const lowCostNodes = parseLowCost(resultConfig);
+    const countryInfo = parseCountries(config, landing);
+    const lowCostNodes = parseLowCost(config);
     const countryGroupNames = getCountryGroupNames(countryInfo, countryThreshold);
     const countries = stripNodeSuffix(countryGroupNames);
 
     const { landingNodes, nonLandingNodes } = landing
-        ? parseNodesByLanding(resultConfig)
+        ? parseNodesByLanding(config)
         : { landingNodes: [], nonLandingNodes: [] };
 
     const {
@@ -123,8 +123,9 @@ function main(config: ClashConfig): ClashConfig {
 
     const finalRules = buildRules({ quicEnabled });
 
-    if (fullConfig) {
-        Object.assign(resultConfig, {
+    return {
+        proxies: config.proxies,
+        ...(fullConfig && {
             "mixed-port": 7890,
             "redir-port": 7892,
             "tproxy-port": 7893,
@@ -140,33 +141,17 @@ function main(config: ClashConfig): ClashConfig {
             "geodata-loader": "standard",
             "external-controller": ":9999",
             "disable-keep-alive": !keepAliveEnabled,
-            profile: {
-                "store-selected": true,
-            },
-        });
-    }
-
-    const dnsConfig = buildDnsConfig({
-        mode: "redir-host",
-        ipv6Enabled,
-    });
-    const dnsConfigFakeIp = buildDnsConfig({
-        mode: "fake-ip",
-        ipv6Enabled,
-        fakeIpFilter: FAKE_IP_FILTER,
-    });
-
-    Object.assign(resultConfig, {
+            profile: { "store-selected": true },
+        }),
         "proxy-groups": proxyGroups,
         "rule-providers": ruleProviders,
         rules: finalRules,
         sniffer: snifferConfig,
-        dns: fakeIPEnabled ? dnsConfigFakeIp : dnsConfig,
+        dns: buildDns({ fakeIPEnabled, ipv6Enabled }),
+        tun: buildTunConfig(tunEnabled),
         "geodata-mode": true,
         "geox-url": geoxURL,
-    });
-
-    return resultConfig;
+    };
 }
 
 (globalThis as Record<string, unknown>).main = main;
