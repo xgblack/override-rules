@@ -1,12 +1,8 @@
 # 自定义出国规则（仅保留“规则类型,匹配值”）
 DOMAIN,cloudreve.azurecr.io
-DOMAIN,foxcode.hshwk.org
 DOMAIN-SUFFIX,plugins.jetbrains.com
 DOMAIN-SUFFIX,marketplace.jetbrains.com
-DOMAIN-SUFFIX,vvvv.ee
-DOMAIN-SUFFIX,alice.dns-dynamic.net
 DOMAIN-SUFFIX,tuhjk.asia
 DOMAIN-SUFFIX,521pokemon.com
 DOMAIN-SUFFIX,web1.go52pokemon.com
-DOMAIN-SUFFIX,xterminal.cn
 DOMAIN-SUFFIX,figma.com
