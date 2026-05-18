@@ -19,3 +19,14 @@ Thumbs.db
 .vscode/
 
 .idea
+
+# HelloAGENTS local state and knowledge base
+### HelloAGENTS ###
+.helloagents/*
+!.helloagents/modules/
+!.helloagents/modules/**
+!.helloagents/plans/
+!.helloagents/plans/**
+!.helloagents/context.md
+!.helloagents/guidelines.md
+!.helloagents/CHANGELOG.md
