@@ -9,7 +9,6 @@ export const PROXY_GROUPS = {
     MANUAL: "手动选择",
     AUTO: "自动选择",
     FALLBACK: "故障转移",
-    DIRECT: "直连",
     LANDING: "落地节点",
     LOW_COST: "低倍率节点",
     FRONT_PROXY: "前置代理",
@@ -31,12 +30,14 @@ export const PROXY_GROUPS = {
     TELEGRAM: "Telegram",
     TRUTH_SOCIAL: "Truth Social",
     TWITTER: "Twitter",
+    TWITCH: "Twitch",
     WEIBO: "新浪微博",
     PIKPAK: "PikPak网盘",
     SSH: "SSH",
     SOGOU_INPUT: "搜狗输入法",
     AD_BLOCK: "广告拦截",
     GLOBAL: "GLOBAL",
+    FINAL: "Final",
 } as const;
 
 export const LOW_COST_NODE_MATCHER = createCaseInsensitiveNodeMatcher(

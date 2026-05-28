@@ -10,16 +10,62 @@ import type {
     BuildCountryProxyGroupsInput,
     BuildProxyGroupsInput,
     CountryInfoItem,
+    GroupType,
     ProxyGroup,
 } from "./types";
 import { isNotNull } from "./utils";
+
+interface BuildGroupByTypeInput {
+    name: string;
+    icon: string;
+    groupType: GroupType;
+    nodeSource: Pick<ProxyGroup, "proxies" | "include-all" | "filter" | "exclude-filter">;
+}
+
+/**
+ * 根据代理组类型生成对应的代理组配置。
+ * 将 groupType 映射为具体的类型字段（select/url-test/load-balance），
+ * 并与节点来源字段合并，消除各处重复的 switch 逻辑。
+ */
+function buildGroupByType({
+    name,
+    icon,
+    groupType,
+    nodeSource,
+}: BuildGroupByTypeInput): ProxyGroup {
+    switch (groupType) {
+        case 0:
+            return { name, icon, type: "select", ...nodeSource };
+        case 1:
+            return {
+                name,
+                icon,
+                type: "url-test",
+                url: "https://cp.cloudflare.com/generate_204",
+                interval: 60,
+                tolerance: 20,
+                ...nodeSource,
+            };
+        case 2:
+            return {
+                name,
+                icon,
+                type: "load-balance",
+                strategy: "sticky-sessions",
+                url: "https://cp.cloudflare.com/generate_204",
+                interval: 60,
+                tolerance: 20,
+                ...nodeSource,
+            };
+    }
+}
 
 /**
  * 为每个地区生成对应的代理组配置。
  * @param input - 构建地区代理组所需的输入参数
  * @param input.countries - 需要生成代理组的地区名称列表（不含后缀）
  * @param input.landing - 是否启用落地节点模式；启用时将排除落地节点
- * @param input.loadBalance - 是否使用负载均衡模式（`load-balance`），否则使用自动测速（`url-test`）
+ * @param input.groupType - 代理组类型：0=select, 1=url-test, 2=load-balance
  * @param input.regexFilter - 是否使用正则过滤模式（`include-all` + `filter`）
  * @param input.countryInfo - 地区节点信息数组，用于非正则模式下直接枚举节点名称
  * @returns 生成的地区代理组配置数组
@@ -27,7 +73,7 @@ import { isNotNull } from "./utils";
 export function buildCountryProxyGroups({
     countries,
     landing,
-    loadBalance,
+    groupType,
     regexFilter,
     countryInfo,
 }: BuildCountryProxyGroupsInput): ProxyGroup[] {
@@ -41,55 +87,18 @@ export function buildCountryProxyGroups({
         const meta = countriesMeta[country];
         if (!meta) continue;
 
-        const baseFields = {
-            name: `${country}${NODE_SUFFIX}`,
-            icon: meta.icon,
-            url: "https://cp.cloudflare.com/generate_204",
-            interval: 60,
-            tolerance: 20,
-        };
+        const name = `${country}${NODE_SUFFIX}`;
+        const icon = meta.icon;
 
-        let groupConfig: ProxyGroup;
+        const nodeSource = !regexFilter
+            ? { proxies: nodesByCountry?.[country] ?? [] }
+            : {
+                  "include-all": true as const,
+                  filter: meta.pattern,
+                  ...(landing ? { "exclude-filter": LANDING_NODE_MATCHER.pattern } : {}),
+              };
 
-        if (loadBalance) {
-            if (!regexFilter) {
-                const nodeNames = nodesByCountry?.[country] ?? [];
-                groupConfig = {
-                    ...baseFields,
-                    type: "load-balance",
-                    strategy: "sticky-sessions",
-                    proxies: nodeNames,
-                };
-            } else {
-                groupConfig = {
-                    ...baseFields,
-                    type: "load-balance",
-                    strategy: "sticky-sessions",
-                    "include-all": true,
-                    filter: meta.pattern,
-                    ...(landing ? { "exclude-filter": LANDING_NODE_MATCHER.pattern } : {}),
-                };
-            }
-        } else {
-            if (!regexFilter) {
-                const nodeNames = nodesByCountry?.[country] ?? [];
-                groupConfig = {
-                    ...baseFields,
-                    type: "url-test",
-                    proxies: nodeNames,
-                };
-            } else {
-                groupConfig = {
-                    ...baseFields,
-                    type: "url-test",
-                    "include-all": true,
-                    filter: meta.pattern,
-                    ...(landing ? { "exclude-filter": LANDING_NODE_MATCHER.pattern } : {}),
-                };
-            }
-        }
-
-        groups.push(groupConfig);
+        groups.push(buildGroupByType({ name, icon, groupType, nodeSource }));
     }
 
     return groups;
@@ -98,6 +107,7 @@ export function buildCountryProxyGroups({
 export function buildProxyGroups({
     landing,
     regexFilter,
+    groupType,
     countries,
     countryProxyGroups,
     lowCostNodes,
@@ -201,22 +211,25 @@ export function buildProxyGroups({
             name: PROXY_GROUPS.BILIBILI,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/bilibili.png`,
             type: "select",
-            proxies:
-                hasTW && hasHK
-                    ? [PROXY_GROUPS.DIRECT, "台湾节点", "香港节点"]
-                    : defaultProxiesDirect,
+            proxies: hasTW && hasHK ? ["DIRECT", "台湾节点", "香港节点"] : defaultProxiesDirect,
         },
         {
             name: PROXY_GROUPS.BAHAMUT,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Bahamut.png`,
             type: "select",
             proxies: hasTW
-                ? ["台湾节点", PROXY_GROUPS.SELECT, PROXY_GROUPS.MANUAL, PROXY_GROUPS.DIRECT]
+                ? ["台湾节点", PROXY_GROUPS.SELECT, PROXY_GROUPS.MANUAL, "DIRECT"]
                 : defaultProxies,
         },
         {
             name: PROXY_GROUPS.YOUTUBE,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/YouTube.png`,
+            type: "select",
+            proxies: defaultProxies,
+        },
+        {
+            name: PROXY_GROUPS.TWITCH,
+            icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Twitch.png`,
             type: "select",
             proxies: defaultProxies,
         },
@@ -281,13 +294,19 @@ export function buildProxyGroups({
             name: PROXY_GROUPS.SOGOU_INPUT,
             icon: `${CDN_URL}/gh/powerfullz/override-rules@master/icons/Sougou.png`,
             type: "select",
-            proxies: [PROXY_GROUPS.DIRECT, "REJECT"],
+            proxies: ["DIRECT", "REJECT"],
         },
         {
             name: PROXY_GROUPS.SSH,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Server.png`,
             type: "select",
             proxies: defaultProxies,
+        },
+        {
+            name: PROXY_GROUPS.FINAL,
+            icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Final.png`,
+            type: "select",
+            proxies: [PROXY_GROUPS.SELECT, "DIRECT"],
         },
         {
             name: PROXY_GROUPS.AUTO,
@@ -308,29 +327,20 @@ export function buildProxyGroups({
             tolerance: 20,
         },
         {
-            name: PROXY_GROUPS.DIRECT,
-            icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Direct.png`,
-            type: "select",
-            proxies: ["DIRECT", PROXY_GROUPS.SELECT],
-        },
-        {
             name: PROXY_GROUPS.AD_BLOCK,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/AdBlack.png`,
             type: "select",
-            proxies: ["REJECT", "REJECT-DROP", PROXY_GROUPS.DIRECT],
+            proxies: ["REJECT", "REJECT-DROP", "DIRECT"],
         },
         lowCostNodes.length > 0 || regexFilter
-            ? {
+            ? buildGroupByType({
                   name: PROXY_GROUPS.LOW_COST,
                   icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Lab.png`,
-                  type: "url-test",
-                  url: "https://cp.cloudflare.com/generate_204",
-                  interval: 60,
-                  tolerance: 20,
-                  ...(!regexFilter
+                  groupType,
+                  nodeSource: !regexFilter
                       ? { proxies: lowCostNodes }
-                      : { "include-all": true, filter: LOW_COST_NODE_MATCHER.pattern }),
-              }
+                      : { "include-all": true as const, filter: LOW_COST_NODE_MATCHER.pattern },
+              })
             : null,
         ...countryProxyGroups,
     ];

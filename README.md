@@ -50,11 +50,11 @@
 
 参考[最速 Substore 订阅管理指南](https://blog.l3zc.com/2025/03/clash-subscription-convert/)。
 
-2025/06/17 更新：新增 JavaScript 格式覆写，更易于维护，已经成为首选方式。JavaScript 格式覆写支持在脚本链接末尾加入`#`以传入参数，传入多个参数时，用`&`分隔，例如`#landing=true&loadbalance=true`。
+2025/06/17 更新：新增 JavaScript 格式覆写，更易于维护，已经成为首选方式。JavaScript 格式覆写支持在脚本链接末尾加入`#`以传入参数，传入多个参数时，用`&`分隔，例如`#landing=true&grouptype=2`。
 
 目前支持的参数：
 
-*   `loadbalance`：启用负载均衡（url-test/load-balance，默认 false）
+*   `grouptype`：地区代理组类型（0=手动选择 select，1=自动测速 url-test，2=负载均衡 load-balance，默认 0）
 *   `landing`：启用落地节点功能（如机场家宽/星链/落地分组，默认 false）[^landing]
 *   `ipv6`：启用 IPv6 支持（默认 false）
 *   `full`：生成完整配置（适合纯内核启动，默认 false）
@@ -64,6 +64,8 @@
 *   `regex`：各国家/地区代理组改用 `include-all` + 正则过滤模式，由 Mihomo 内核在运行时按正则动态筛选节点，而非在脚本执行时枚举节点名称（默认 false）[^regex]
 *   `tun`：启用 TUN 模式（gvisor 栈，自动配置路由排除地址与 DNS 劫持，默认 false）
 *   `threshold`：国家/地区节点数量小于该值时不显示分组（默认 0）
+
+> **向后兼容**：旧的 `loadbalance` 参数仍然可用。当 `grouptype` 未指定时，`loadbalance=true` 等价于 `grouptype=2`，`loadbalance=false` 等价于 `grouptype=1`。
 
 [^landing]: 注意在默认的枚举模式下，如果没有符合条件的落地节点（e.g 名称中带有「家宽」、「商宽」、「落地」等关键词的节点），内核会无法启动。
 [^quic]: 默认屏蔽了 QUIC 流量防止节点 UDP 性能不佳影响上网体验，如果确信节点质量良好，建议设置为 true。
@@ -75,16 +77,16 @@
 
 #### JS 覆写使用示例
 
-无特殊需求，直接在 Substore 「脚本操作」处填入脚本链接：
+想要国家/地区代理组自动选择延迟最低的节点，使用`grouptype=1`参数，在 Substore「脚本操作」处填入脚本链接：
 
 ```
-https://cdn.jsdelivr.net/gh/powerfullz/override-rules/convert.min.js
+https://cdn.jsdelivr.net/gh/powerfullz/override-rules/convert.min.js#grouptype=1
 ```
 
-有链式代理和多个节点提供商之间负载均衡的需求，使用`landing=true&loadbalance=true`两个参数：
+有链式代理和多个节点提供商之间负载均衡的需求，使用`landing=true&grouptype=2`两个参数：
 
 ```
-https://cdn.jsdelivr.net/gh/powerfullz/override-rules/convert.min.js#landing=true&loadbalance=true
+https://cdn.jsdelivr.net/gh/powerfullz/override-rules/convert.min.js#landing=true&grouptype=2
 ```
 
 如果想第一时间体验最新加入的 ~~Bug~~ 功能，可以使用 preview 分支的 Github Raw 链接：
@@ -93,16 +95,9 @@ https://cdn.jsdelivr.net/gh/powerfullz/override-rules/convert.min.js#landing=tru
 https://raw.githubusercontent.com/powerfullz/override-rules/refs/heads/preview/convert.min.js
 ```
 
-### 关于各 Mihomo 客户端覆盖 GeoIP/GeoSite 下载地址的说明
+### 关于 DNS 泄露的说明
 
-这覆写规则大量引用了 Loyalsoldier/v2ray-rules-dat，大多数 Mihomo 客户端都会覆写 GeoIP/GeoSite 数据库资源链接，为了获得更好的分流体验，建议手动修改客户端内的覆写设置。以 Mihomo Party 为例，点击侧栏中的「外部资源」，分别将资源链接替换为以下值：
-
-| 项目 | 链接 |
-| :--- | :--- |
-| GeoIP 数据库 | `https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat` |
-| GeoSite 数据库 | `https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat` |
-| MMDB 数据库 | `https://cdn.jsdelivr.net/gh/Loyalsoldier/geoip@release/Country.mmdb` |
-| ASN 数据库 | `https://cdn.jsdelivr.net/gh/Loyalsoldier/geoip@release/GeoLite2-ASN.mmdb` |
+很多人问用了这覆写规则跑 DNS 泄露测试说会泄露，为此我写了一篇文章澄清一些误解，具体请看[「关于 DNS 泄露及其相关误解的说明」](https://blog.l3zc.com/2026/05/dns-leak-misunderstanding/)。
 
 ### 关于部分特殊代理组的说明
 
@@ -147,22 +142,22 @@ proxies:
 文件命名规则依据支持的开关参数穷举，格式如下：
 
 ```text
-config_lb-{0|1}_landing-{0|1}_ipv6-{0|1}_full-{0|1}_keepalive-{0|1}_fakeip-{0|1}_quic-{0|1}_tun-{0|1}.yaml
+config_gt-{0|1|2}_landing-{0|1}_ipv6-{0|1}_full-{0|1}_keepalive-{0|1}_fakeip-{0|1}_quic-{0|1}_tun-{0|1}.yaml
 ```
 
 **获取示例（开启 full，其余关闭）：**
 ```text
-https://cdn.jsdelivr.net/gh/powerfullz/override-rules/yamls/config_lb-0_landing-0_ipv6-0_full-1_keepalive-0_fakeip-0_quic-0_tun-0.yaml
+https://cdn.jsdelivr.net/gh/powerfullz/override-rules/yamls/config_gt-0_landing-0_ipv6-0_full-1_keepalive-0_fakeip-0_quic-0_tun-0.yaml
 ```
 
 **固定版本获取示例：**
 ```text
-https://cdn.jsdelivr.net/gh/powerfullz/override-rules@v0.1.0/yamls/config_lb-0_landing-0_ipv6-0_full-1_keepalive-0_fakeip-0_quic-0_tun-0.yaml
+https://cdn.jsdelivr.net/gh/powerfullz/override-rules@v0.1.0/yamls/config_gt-0_landing-0_ipv6-0_full-1_keepalive-0_fakeip-0_quic-0_tun-0.yaml
 ```
 
 如果使用镜像：
 ```text
-https://git.l3zc.com/powerfullz/override-rules/raw/branch/dist/yamls/config_lb-0_landing-0_ipv6-0_full-1_keepalive-0_fakeip-0_quic-0_tun-0.yaml
+https://git.l3zc.com/powerfullz/override-rules/raw/branch/dist/yamls/config_gt-0_landing-0_ipv6-0_full-1_keepalive-0_fakeip-0_quic-0_tun-0.yaml
 ```
 
 *注：CI 仅套用了一份虚拟的 `fake_proxies.json` 来模拟生成 YAML，因此它无法像 JS 动态脚本那样根据你的实际节点智能生成专属分组策略，只能保守地包含常用的国家/地区。为了最高效的分流体验，仍强烈推荐使用 JS 覆写。*
